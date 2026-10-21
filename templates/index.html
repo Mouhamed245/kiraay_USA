@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="hero">
+  <div class="wrap two">
+    <div>
+      <h1>{{ S.hero_title }}</h1>
+      <p class="lead pre">{{ S.hero_text }}</p>
+      <div class="btns">
+        <a class="btn" href="#rejoindre">Rejoindre le groupe</a>
+        <a class="btn alt" href="#rejoindre">Demander des informations</a>
+      </div>
+    </div>
+    <img class="framed" src="{{ url_for('static', filename=S.hero_image) }}" alt="Photo du parti Kiiraay – Les Patriotes Républicains">
+  </div>
+</div>
+
+<section class="mist" id="propos">
+  <div class="wrap two">
+    <div>
+      <h2>{{ S.about_title }}</h2>
+      <p class="pre">{{ S.about_text }}</p>
+    </div>
+    <img src="{{ url_for('static', filename='images/logo.jpeg') }}" alt="Logo Kiiraay – Les Patriotes Républicains : un poing tenant un parapluie rouge devant la carte du Sénégal, entouré de lauriers">
+  </div>
+</section>
+
+<section id="actualites">
+  <div class="wrap">
+    <h2>Actualités</h2>
+    {% if posts %}
+    <div class="cards">
+      {% for p in posts %}
+      <article class="card">
+        {% if p.image %}<img src="{{ url_for('static', filename='uploads/' ~ p.image) }}" alt="">{% endif %}
+        <div class="card-body">
+          <time>{{ p.created_at[:10] }}</time>
+          <h3><a href="{{ url_for('publication', pid=p.id) }}">{{ p.title }}</a></h3>
+          <p>{{ p.content[:160] }}{% if p.content|length > 160 %}…{% endif %}</p>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    <p><a href="{{ url_for('publications') }}">Voir toutes les actualités</a></p>
+    {% else %}
+    <p>Aucune actualité pour le moment. Revenez bientôt.</p>
+    {% endif %}
+  </div>
+</section>
+
+<section class="mist" id="galerie">
+  <div class="wrap">
+    <h2>En images</h2>
+    <div class="gallery">
+      {% for g in gallery %}
+      <figure>
+        <img src="{{ url_for('static', filename=g.image) }}" alt="{{ g.caption or 'Photo Kiiraay America' }}">
+        {% if g.caption %}<figcaption>{{ g.caption }}</figcaption>{% endif %}
+      </figure>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section id="rejoindre">
+  <div class="wrap">
+    <div class="formbox">
+      <h2>Rejoindre le groupe ou demander des informations</h2>
+      <p>Remplissez ce formulaire. Un membre de Kiiraay America vous répondra.</p>
+      <form id="contact" action="{{ url_for('contact') }}" method="POST">
+        <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+        <div><label for="prenom">Prénom</label><input id="prenom" name="prenom" type="text" autocomplete="given-name" maxlength="80" required></div>
+        <div><label for="nom">Nom</label><input id="nom" name="nom" type="text" autocomplete="family-name" maxlength="80" required></div>
+        <div><label for="tel">Numéro de téléphone (USA)</label><input id="tel" name="telephone" type="tel" autocomplete="tel" placeholder="+1 555 123 4567" maxlength="30" required></div>
+        <div><label for="email">E-mail</label><input id="email" name="email" type="email" autocomplete="email" maxlength="120" required></div>
+        <div>
+          <label for="etat">État</label>
+          <select id="etat" name="etat" required>
+            <option value="">Choisir…</option>
+            {% for e in ETATS %}<option>{{ e }}</option>{% endfor %}
+          </select>
+        </div>
+        <div><label for="ville">Ville</label><input id="ville" name="ville" type="text" autocomplete="address-level2" maxlength="80" required></div>
+        <div class="full">
+          <label for="demande">Votre demande</label>
+          <select id="demande" name="demande" required>
+            <option value="">Choisir…</option>
+            {% for d in DEMANDES %}<option>{{ d }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="full"><label for="message">Message (facultatif)</label><textarea id="message" name="message" maxlength="2000"></textarea></div>
+        <input class="hp" type="text" name="_gotcha" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <div class="full check">
+          <input id="consent" name="consent" value="1" type="checkbox" required>
+          <label for="consent" class="plain">J’accepte que Kiiraay America utilise ces informations pour me contacter.</label>
+        </div>
+        <div class="full"><button type="submit">Envoyer ma demande</button></div>
+      </form>
+      <div id="msg" role="status"></div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='app.js') }}"></script>{% endblock %}

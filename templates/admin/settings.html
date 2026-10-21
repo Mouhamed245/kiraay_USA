@@ -1,0 +1,22 @@
+{% extends "admin/base.html" %}
+{% block title %}Textes et photo{% endblock %}
+{% block content %}
+<h1 class="page-title">Textes et photo du site</h1>
+<div class="formbox wide">
+<form method="POST" enctype="multipart/form-data" class="stack">
+  <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+  <div><label for="hero_title">Grand titre de l’accueil</label><input id="hero_title" name="hero_title" value="{{ S.hero_title }}" maxlength="200"></div>
+  <div><label for="hero_text">Texte sous le titre</label><textarea id="hero_text" name="hero_text" rows="4">{{ S.hero_text }}</textarea></div>
+  <div>
+    <label for="hero_image">Photo du haut de la page</label>
+    <img class="thumb" src="{{ url_for('static', filename=S.hero_image) }}" alt="Photo actuelle">
+    <input id="hero_image" name="hero_image" type="file" accept=".jpg,.jpeg,.png,.webp">
+    <label class="check plain"><input type="checkbox" name="reset_hero_image" value="1"> Remettre la photo d’origine</label>
+  </div>
+  <div><label for="about_title">Titre « Qui sommes-nous »</label><input id="about_title" name="about_title" value="{{ S.about_title }}" maxlength="200"></div>
+  <div><label for="about_text">Texte « Qui sommes-nous » (une ligne vide = nouveau paragraphe)</label><textarea id="about_text" name="about_text" rows="8">{{ S.about_text }}</textarea></div>
+  <div><label for="footer_text">Texte du bas de page</label><input id="footer_text" name="footer_text" value="{{ S.footer_text }}" maxlength="200"></div>
+  <div class="row"><button type="submit">Enregistrer</button></div>
+</form>
+</div>
+{% endblock %}

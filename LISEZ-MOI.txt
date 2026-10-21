@@ -1,0 +1,49 @@
+KIIRAAY AMERICA - SITE WEB COMPLET
+===================================
+
+1) INSTALLER (une seule fois)
+   - Installez Python 3.9 ou plus récent : https://www.python.org/downloads/
+   - Ouvrez un terminal dans ce dossier, puis :
+        pip install -r requirements.txt
+
+2) LANCER LE SITE
+        python app.py
+   - Site public : http://127.0.0.1:5000
+   - Administration : http://127.0.0.1:5000/admin
+   - Connexion admin : cliquez sur l'icône personne en haut à droite du site.
+        Utilisateur  : Mouhamedsakho
+        Mot de passe : Mouhamedsakho@
+     (défini en haut du fichier app.py : ADMIN_USER_DEFAULT et ADMIN_PASSWORD_DEFAULT)
+   - IMPORTANT : ce mot de passe est facile à deviner. Avant la mise en ligne, changez-le :
+        python app.py set-password
+     puis retirez-le du fichier app.py (ou utilisez les variables ADMIN_USER / ADMIN_PASSWORD).
+
+3) CE QUE VOUS FAITES DANS L'ADMIN
+   - Demandes : voir toutes les personnes qui ont rempli le formulaire (nom, téléphone,
+     e-mail, État, ville, demande, message), chercher, filtrer, marquer "Traitée",
+     supprimer, exporter en CSV (s'ouvre dans Excel).
+   - Publications : créer, modifier, supprimer des actualités avec une image.
+     Elles apparaissent tout de suite sur la page d'accueil et sur /publications.
+     Chaque actualité a des boutons de partage (WhatsApp, Facebook, X, copier le lien).
+   - Galerie : ajouter ou supprimer des photos affichées sur le site.
+   - Textes et photo : modifier le grand titre, le texte d'accueil, la photo du haut,
+     le texte "Qui sommes-nous" et le bas de page.
+
+4) OÙ SONT LES DONNÉES
+   - data/kiiraay.db  : toutes les demandes et publications (FAITES-EN UNE COPIE régulièrement)
+   - static/uploads/  : les images des publications
+   - Les photos du site sont dans static/images/
+
+5) METTRE EN LIGNE SUR kiiraayamerica.org
+   Le site doit tourner sur un serveur (VPS, Render, Railway, PythonAnywhere...), pas sur un
+   hébergement qui ne sert que des fichiers HTML.
+   - Activez HTTPS (obligatoire, sinon le mot de passe circule en clair).
+   - Définissez la variable PRODUCTION=1 (cookies sécurisés).
+   - Lancez avec un vrai serveur :
+        pip install waitress
+        waitress-serve --listen=0.0.0.0:8000 app:app
+   - Pointez le domaine vers le serveur (DNS) et mettez Nginx/Caddy devant pour le HTTPS.
+   - Gardez le dossier data/ en dehors de tout accès public et sauvegardez-le.
+
+NOTE : les dates sont en heure UTC. Les données des personnes (nom, téléphone, e-mail) sont
+personnelles : ne les partagez pas et protégez bien votre mot de passe admin.

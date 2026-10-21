@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Kiiraay America – Les Patriotes Républicains aux États-Unis{% endblock %}</title>
+<meta name="description" content="Kiiraay America : le groupe des Patriotes Républicains aux États-Unis. Rejoignez-nous ou demandez des informations.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header class="top">
+  <div class="wrap bar">
+    <a class="brand" href="{{ url_for('index') }}">
+      <img class="logo" src="{{ url_for('static', filename='images/logo-emblem.png') }}" alt="">
+      <span>KIIRAAY <em>AMERICA</em></span>
+    </a>
+    <div class="tools">
+      <a class="icon" href="{{ url_for('admin_dashboard') }}" aria-label="Espace administrateur" title="Espace administrateur">
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
+      </a>
+      <button class="menu" id="menuBtn" type="button" aria-label="Menu" aria-expanded="false" aria-controls="mainNav">
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+    </div>
+    <nav id="mainNav">
+      <a href="{{ url_for('index') }}#propos">Qui sommes-nous</a>
+      <a href="{{ url_for('publications') }}">Actualités</a>
+      <a href="{{ url_for('index') }}#galerie">Galerie</a>
+      <a class="join" href="{{ url_for('index') }}#rejoindre">Nous rejoindre</a>
+    </nav>
+  </div>
+</header>
+<main>
+{% block content %}{% endblock %}
+</main>
+<footer>
+  <div class="wrap">
+    <div class="brand">KIIRAAY AMERICA</div>
+    <p>{{ S.footer_text }}<br>kiiraayamerica.org</p>
+  </div>
+</footer>
+<script src="{{ url_for('static', filename='site.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

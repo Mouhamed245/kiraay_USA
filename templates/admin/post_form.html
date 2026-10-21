@@ -1,0 +1,41 @@
+{% extends "admin/base.html" %}
+{% block title %}{{ 'Modifier' if pid else 'Nouvelle' }} publication{% endblock %}
+{% block content %}
+<h1 class="page-title">{{ 'Modifier la publication' if pid else 'Nouvelle publication' }}</h1>
+<div class="formbox wide">
+<form method="POST" enctype="multipart/form-data" class="stack">
+  <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+  <div><label for="title">Titre</label><input id="title" name="title" type="text" maxlength="200" value="{{ post.title if post else '' }}" required></div>
+  <div><label for="content">Texte</label><textarea id="content" name="content" rows="12" required>{{ post.content if post else '' }}</textarea></div>
+  <div>
+    <label for="image">Photo du haut (JPG, PNG ou WEBP, 6 Mo maximum par photo)</label>
+    {% if old_image %}
+      <img class="thumb" src="{{ url_for('static', filename='uploads/' ~ old_image) }}" alt="Image actuelle">
+      <label class="check plain"><input type="checkbox" name="remove_image" value="1"> Supprimer l’image actuelle</label>
+    {% endif %}
+    <input id="image" name="image" type="file" accept=".jpg,.jpeg,.png,.webp">
+  </div>
+  <div>
+    <label for="images">Autres photos (vous pouvez en choisir plusieurs, elles s’affichent en bas de la publication)</label>
+    {% if extras %}
+    <div class="admin-gallery">
+      {% for x in extras %}
+      <figure>
+        <img src="{{ url_for('static', filename='uploads/' ~ x.image) }}" alt="">
+        <label class="check plain"><input type="checkbox" name="remove_extra" value="{{ x.id }}"> Supprimer</label>
+      </figure>
+      {% endfor %}
+    </div>
+    {% endif %}
+    <input id="images" name="images" type="file" accept=".jpg,.jpeg,.png,.webp" multiple>
+  </div>
+  <label class="check plain">
+    <input type="checkbox" name="published" value="1" {{ 'checked' if (not post) or post.published }}> Publier sur le site
+  </label>
+  <div class="row">
+    <button type="submit">Enregistrer</button>
+    <a class="btn alt" href="{{ url_for('admin_posts') }}">Annuler</a>
+  </div>
+</form>
+</div>
+{% endblock %}

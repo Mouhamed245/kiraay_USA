@@ -1,0 +1,27 @@
+{% extends "admin/base.html" %}
+{% block title %}Galerie{% endblock %}
+{% block content %}
+<h1 class="page-title">Galerie photos</h1>
+<div class="formbox wide">
+  <h2 class="h3">Ajouter une image</h2>
+  <form method="POST" action="{{ url_for('gallery_add') }}" enctype="multipart/form-data" class="stack">
+    <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+    <div><label for="image">Image (JPG, PNG ou WEBP, 6 Mo maximum)</label><input id="image" name="image" type="file" accept=".jpg,.jpeg,.png,.webp" required></div>
+    <div><label for="caption">Légende (facultatif)</label><input id="caption" name="caption" type="text" maxlength="200"></div>
+    <div class="row"><button type="submit">Ajouter à la galerie</button></div>
+  </form>
+</div>
+<div class="admin-gallery">
+  {% for g in items %}
+  <figure>
+    <img src="{{ url_for('static', filename=g.image) }}" alt="">
+    <figcaption>{{ g.caption }}</figcaption>
+    <form class="inline" method="POST" action="{{ url_for('gallery_delete', gid=g.id) }}" data-confirm="Supprimer cette image ?">
+      <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+      <button class="link danger" type="submit">Supprimer</button>
+    </form>
+  </figure>
+  {% else %}<p>La galerie est vide.</p>{% endfor %}
+</div>
+<script src="{{ url_for('static', filename='admin.js') }}"></script>
+{% endblock %}

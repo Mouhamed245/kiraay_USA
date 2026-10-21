@@ -1,0 +1,30 @@
+{% extends "admin/base.html" %}
+{% block title %}Publications{% endblock %}
+{% block content %}
+<h1 class="page-title">Publications</h1>
+<p><a class="btn small" href="{{ url_for('admin_post_form') }}">Nouvelle publication</a></p>
+{% if posts %}
+<div class="table-scroll">
+<table>
+  <thead><tr><th>Date (UTC)</th><th>Titre</th><th>Statut</th><th></th></tr></thead>
+  <tbody>
+  {% for p in posts %}
+  <tr>
+    <td>{{ p.created_at }}</td>
+    <td>{{ p.title }}</td>
+    <td>{{ 'Publiée' if p.published else 'Brouillon' }}</td>
+    <td class="actions">
+      <a href="{{ url_for('admin_post_form', pid=p.id) }}">Modifier</a>
+      <form class="inline" method="POST" action="{{ url_for('delete_post', pid=p.id) }}" data-confirm="Supprimer cette publication ?">
+        <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+        <button class="link danger" type="submit">Supprimer</button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}<p>Aucune publication.</p>{% endif %}
+<script src="{{ url_for('static', filename='admin.js') }}"></script>
+{% endblock %}

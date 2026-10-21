@@ -1,0 +1,61 @@
+{% extends "admin/base.html" %}
+{% block title %}Demandes{% endblock %}
+{% block content %}
+<h1 class="page-title">Demandes reçues</h1>
+<div class="stats">
+  <div><strong>{{ stats.total }}</strong><span>demandes au total</span></div>
+  <div><strong>{{ stats.nouveaux }}</strong><span>à traiter</span></div>
+  <div><strong>{{ stats.posts }}</strong><span>publications</span></div>
+</div>
+
+<form class="filters" method="GET">
+  <input type="search" name="q" value="{{ q }}" placeholder="Rechercher nom, e-mail, téléphone, ville">
+  <select name="etat" aria-label="État">
+    <option value="">Tous les États</option>
+    {% for e in ETATS %}<option {{ 'selected' if e == etat }}>{{ e }}</option>{% endfor %}
+  </select>
+  <select name="statut" aria-label="Statut">
+    <option value="">Tous les statuts</option>
+    <option value="0" {{ 'selected' if statut == '0' }}>À traiter</option>
+    <option value="1" {{ 'selected' if statut == '1' }}>Traitées</option>
+  </select>
+  <button type="submit">Filtrer</button>
+  <a class="btn alt small" href="{{ url_for('export_csv', q=q, etat=etat, statut=statut) }}">Exporter en CSV (Excel)</a>
+</form>
+
+{% if rows %}
+<div class="table-scroll">
+<table>
+  <thead><tr><th>Date (UTC)</th><th>Nom</th><th>Téléphone</th><th>E-mail</th><th>Lieu</th><th>Demande</th><th>Message</th><th>Statut</th><th></th></tr></thead>
+  <tbody>
+  {% for r in rows %}
+  <tr class="{{ 'done' if r.traite }}">
+    <td>{{ r.created_at }}</td>
+    <td>{{ r.prenom }} {{ r.nom }}</td>
+    <td><a href="tel:{{ r.telephone }}">{{ r.telephone }}</a></td>
+    <td><a href="mailto:{{ r.email }}">{{ r.email }}</a></td>
+    <td>{{ r.ville }}, {{ r.etat }}</td>
+    <td>{{ r.demande }}</td>
+    <td class="msgcell">{{ r.message }}</td>
+    <td>
+      <form class="inline" method="POST" action="{{ url_for('toggle_traite', sid=r.id) }}">
+        <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+        <button class="pill {{ 'ok' if r.traite }}" type="submit">{{ 'Traitée' if r.traite else 'À traiter' }}</button>
+      </form>
+    </td>
+    <td>
+      <form class="inline" method="POST" action="{{ url_for('delete_submission', sid=r.id) }}" data-confirm="Supprimer cette demande ?">
+        <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+        <button class="link danger" type="submit">Supprimer</button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p>Aucune demande pour le moment.</p>
+{% endif %}
+<script src="{{ url_for('static', filename='admin.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}{{ p.title }} – Kiiraay America{% endblock %}
+{% block content %}
+<section>
+  <div class="wrap post">
+    <p><a href="{{ url_for('publications') }}">← Toutes les actualités</a></p>
+    <h1 class="page-title">{{ p.title }}</h1>
+    <time class="muted">{{ p.created_at[:10] }}</time>
+    {% if p.image %}<img class="post-img" src="{{ url_for('static', filename='uploads/' ~ p.image) }}" alt="">{% endif %}
+    <div class="post-text">{{ p.content | linkify }}</div>
+    {% if extras %}
+    <div class="post-gallery">
+      {% for x in extras %}
+      <figure><a href="{{ url_for('static', filename='uploads/' ~ x.image) }}" target="_blank" rel="noopener"><img src="{{ url_for('static', filename='uploads/' ~ x.image) }}" alt="Photo {{ loop.index }} de la publication" loading="lazy"></a></figure>
+      {% endfor %}
+    </div>
+    {% endif %}
+    <div class="share">
+      <strong>Partager :</strong>
+      <a href="https://wa.me/?text={{ (p.title ~ ' ' ~ request.url) | urlencode }}" target="_blank" rel="noopener">WhatsApp</a>
+      <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.url | urlencode }}" target="_blank" rel="noopener">Facebook</a>
+      <a href="https://twitter.com/intent/tweet?text={{ p.title | urlencode }}&url={{ request.url | urlencode }}" target="_blank" rel="noopener">X</a>
+      <button class="link" type="button" id="copyLink" data-url="{{ request.url }}">Copier le lien</button>
+    </div>
+  </div>
+</section>
+{% endblock %}

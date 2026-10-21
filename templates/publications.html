@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Actualités – Kiiraay America{% endblock %}
+{% block content %}
+<section>
+  <div class="wrap">
+    <h1 class="page-title">Actualités</h1>
+    {% if posts %}
+    <div class="cards">
+      {% for p in posts %}
+      <article class="card">
+        {% if p.image %}<img src="{{ url_for('static', filename='uploads/' ~ p.image) }}" alt="">{% endif %}
+        <div class="card-body">
+          <time>{{ p.created_at[:10] }}</time>
+          <h3><a href="{{ url_for('publication', pid=p.id) }}">{{ p.title }}</a></h3>
+          <p>{{ p.content[:160] }}{% if p.content|length > 160 %}…{% endif %}</p>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}<p>Aucune actualité pour le moment.</p>{% endif %}
+  </div>
+</section>
+{% endblock %}
