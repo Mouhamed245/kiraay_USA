@@ -265,7 +265,7 @@ def login_required(f):
 @app.route("/")
 def index():
     posts = get_db().execute(
-        "SELECT posts.*, (SELECT COUNT(*) FROM post_videos v WHERE v.post_id=posts.id) AS nb_videos FROM posts WHERE published=1 ORDER BY id DESC LIMIT 6").fetchall()
+        "SELECT posts.*, (SELECT COUNT(*) FROM post_videos v WHERE v.post_id=posts.id) AS nb_videos, (SELECT video FROM post_videos v WHERE v.post_id=posts.id ORDER BY position, id LIMIT 1) AS first_video, (SELECT COUNT(*) FROM post_images i WHERE i.post_id=posts.id) AS nb_extras FROM posts WHERE published=1 ORDER BY id DESC LIMIT 6").fetchall()
     gallery = get_db().execute("SELECT * FROM gallery ORDER BY id DESC").fetchall()
     return render_template("index.html", posts=posts, gallery=gallery)
 
@@ -273,7 +273,7 @@ def index():
 @app.route("/publications")
 def publications():
     posts = get_db().execute(
-        "SELECT posts.*, (SELECT COUNT(*) FROM post_videos v WHERE v.post_id=posts.id) AS nb_videos FROM posts WHERE published=1 ORDER BY id DESC").fetchall()
+        "SELECT posts.*, (SELECT COUNT(*) FROM post_videos v WHERE v.post_id=posts.id) AS nb_videos, (SELECT video FROM post_videos v WHERE v.post_id=posts.id ORDER BY position, id LIMIT 1) AS first_video, (SELECT COUNT(*) FROM post_images i WHERE i.post_id=posts.id) AS nb_extras FROM posts WHERE published=1 ORDER BY id DESC").fetchall()
     return render_template("publications.html", posts=posts)
 
 

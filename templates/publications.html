@@ -7,15 +7,7 @@
     {% if posts %}
     <div class="cards">
       {% for p in posts %}
-      <article class="card">
-        {% if p.image %}<img src="{{ url_for('static', filename='uploads/' ~ p.image) }}" alt="">{% endif %}
-        <div class="card-body">
-          <time>{{ p.created_at[:10] }}</time>
-          <h3><a href="{{ url_for('publication', pid=p.id) }}">{{ p.title }}</a></h3>
-          <p>{{ p.content | excerpt(160) }}</p>
-          <p class="more"><a href="{{ url_for('publication', pid=p.id) }}">Lire la suite →</a>{% if p.nb_videos %} <span class="badge-video">▶ Vidéo</span>{% endif %}</p>
-        </div>
-      </article>
+      {% include "_post_card.html" %}
       {% endfor %}
     </div>
     {% else %}<p>Aucune actualité pour le moment.</p>{% endif %}

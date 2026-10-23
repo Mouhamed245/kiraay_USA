@@ -1,0 +1,12 @@
+<article class="card">
+  {% if p.image %}<img src="{{ url_for('static', filename='uploads/' ~ p.image) }}" alt="">{% endif %}
+  {% if p.first_video %}<video controls playsinline preload="metadata" src="{{ url_for('static', filename='uploads/' ~ p.first_video) }}#t=0.1">Votre navigateur ne peut pas lire cette vidéo.</video>{% endif %}
+  <div class="card-body">
+    <time>{{ p.created_at[:10] }}</time>
+    <h3><a href="{{ url_for('publication', pid=p.id) }}">{{ p.title }}</a></h3>
+    <p>{{ p.content | excerpt(160) }}</p>
+    {% if p.content|length > 160 or p.nb_extras or p.nb_videos > 1 %}
+    <p class="more"><a href="{{ url_for('publication', pid=p.id) }}">Lire la suite →</a>{% if p.nb_videos > 1 %} <span class="badge-video">+{{ p.nb_videos - 1 }} vidéo{{ 's' if p.nb_videos > 2 }}</span>{% endif %}</p>
+    {% endif %}
+  </div>
+</article>
