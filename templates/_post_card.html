@@ -1,6 +1,15 @@
 <article class="card">
-  {% if p.image %}<img src="{{ url_for('static', filename='uploads/' ~ p.image) }}" alt="">{% endif %}
-  {% if p.first_video %}<video controls playsinline preload="metadata" src="{{ url_for('static', filename='uploads/' ~ p.first_video) }}#t=0.1">Votre navigateur ne peut pas lire cette vidéo.</video>{% endif %}
+  {% if p.image %}
+  <div class="media">
+    <img class="bg" src="{{ url_for('static', filename='uploads/' ~ p.image) }}" alt="" aria-hidden="true" loading="lazy">
+    <img class="fg" src="{{ url_for('static', filename='uploads/' ~ p.image) }}" alt="" loading="lazy">
+  </div>
+  {% endif %}
+  {% if p.first_video %}
+  <div class="media">
+    <video controls playsinline preload="metadata" src="{{ url_for('static', filename='uploads/' ~ p.first_video) }}#t=0.1">Votre navigateur ne peut pas lire cette vidéo.</video>
+  </div>
+  {% endif %}
   <div class="card-body">
     <time>{{ p.created_at[:10] }}</time>
     <h3><a href="{{ url_for('publication', pid=p.id) }}">{{ p.title }}</a></h3>
