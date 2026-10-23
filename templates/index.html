@@ -35,7 +35,8 @@
         <div class="card-body">
           <time>{{ p.created_at[:10] }}</time>
           <h3><a href="{{ url_for('publication', pid=p.id) }}">{{ p.title }}</a></h3>
-          <p>{{ p.content[:160] }}{% if p.content|length > 160 %}…{% endif %}</p>
+          <p>{{ p.content | excerpt(160) }}</p>
+          <p class="more"><a href="{{ url_for('publication', pid=p.id) }}">Lire la suite →</a>{% if p.nb_videos %} <span class="badge-video">▶ Vidéo</span>{% endif %}</p>
         </div>
       </article>
       {% endfor %}

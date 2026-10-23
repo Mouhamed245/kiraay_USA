@@ -8,6 +8,13 @@
     <time class="muted">{{ p.created_at[:10] }}</time>
     {% if p.image %}<img class="post-img" src="{{ url_for('static', filename='uploads/' ~ p.image) }}" alt="">{% endif %}
     <div class="post-text">{{ p.content | linkify }}</div>
+    {% if videos %}
+    <div class="post-videos">
+      {% for v in videos %}
+      <video controls playsinline preload="metadata" src="{{ url_for('static', filename='uploads/' ~ v.video) }}">Votre navigateur ne peut pas lire cette vidéo.</video>
+      {% endfor %}
+    </div>
+    {% endif %}
     {% if extras %}
     <div class="post-gallery">
       {% for x in extras %}

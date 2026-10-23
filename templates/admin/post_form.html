@@ -29,6 +29,21 @@
     {% endif %}
     <input id="images" name="images" type="file" accept=".jpg,.jpeg,.png,.webp" multiple>
   </div>
+  <div>
+    <label for="videos">Vidéos (MP4, MOV ou WEBM, 100 Mo maximum par vidéo ; le plus simple est le format MP4)</label>
+    {% if videos %}
+    <div class="admin-gallery">
+      {% for v in videos %}
+      <figure>
+        <video controls preload="metadata" src="{{ url_for('static', filename='uploads/' ~ v.video) }}"></video>
+        <label class="check plain"><input type="checkbox" name="remove_video" value="{{ v.id }}"> Supprimer</label>
+      </figure>
+      {% endfor %}
+    </div>
+    {% endif %}
+    <input id="videos" name="videos" type="file" accept=".mp4,.m4v,.mov,.webm,video/mp4,video/quicktime,video/webm" multiple>
+    <p class="muted">Après « Enregistrer », patientez : l’envoi d’une vidéo peut prendre plusieurs minutes.</p>
+  </div>
   <label class="check plain">
     <input type="checkbox" name="published" value="1" {{ 'checked' if (not post) or post.published }}> Publier sur le site
   </label>

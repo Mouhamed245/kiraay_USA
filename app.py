@@ -85,6 +85,9 @@ SEED_FILES = ["rencontre-cover.jpg", "rencontre-2.jpg", "rencontre-3.jpg", "renc
 TEXT_KEYS = ["hero_title", "hero_text", "about_title", "about_text", "footer_text"]
 
 ALLOWED_IMG = {"jpg": b"\xff\xd8\xff", "jpeg": b"\xff\xd8\xff", "png": b"\x89PNG", "webp": b"RIFF"}
+MAX_IMG_BYTES = 6 * 1024 * 1024      # 6 Mo par photo
+MAX_VIDEO_BYTES = 100 * 1024 * 1024  # 100 Mo par vidéo
+ALLOWED_VIDEO = {"mp4", "m4v", "mov", "webm"}
 DEMANDES = ["Je veux rejoindre le groupe", "Je veux des informations", "Je veux être bénévole"]
 ETATS = ["Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut",
          "Delaware", "District of Columbia", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois",
@@ -96,7 +99,7 @@ ETATS = ["Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "
          "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming"]
 
 app = Flask(__name__)
-app.config["MAX_CONTENT_LENGTH"] = 6 * 1024 * 1024
+app.config["MAX_CONTENT_LENGTH"] = 120 * 1024 * 1024  # total d'un envoi (photos + vidéos)
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 app.config["SESSION_COOKIE_SECURE"] = os.environ.get("PRODUCTION") == "1"
@@ -152,6 +155,9 @@ def init_db():
     CREATE TABLE IF NOT EXISTS post_images(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         post_id INTEGER NOT NULL, image TEXT NOT NULL, position INTEGER DEFAULT 0);
+    CREATE TABLE IF NOT EXISTS post_videos(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        post_id INTEGER NOT NULL, video TEXT NOT NULL, position INTEGER DEFAULT 0);
     CREATE TABLE IF NOT EXISTS posts(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT NOT NULL, content TEXT NOT NULL,
@@ -230,7 +236,7 @@ def headers(resp):
     resp.headers["X-Frame-Options"] = "DENY"
     resp.headers["Referrer-Policy"] = "same-origin"
     resp.headers["Content-Security-Policy"] = (
-        "default-src 'self'; img-src 'self' data:; "
+        "default-src 'self'; img-src 'self' data:; media-src 'self'; "
         "style-src 'self' https://fonts.googleapis.com; "
         "font-src https://fonts.gstatic.com; script-src 'self'; "
         "form-action 'self'; frame-ancestors 'none'")
@@ -259,7 +265,7 @@ def login_required(f):
 @app.route("/")
 def index():
     posts = get_db().execute(
-        "SELECT * FROM posts WHERE published=1 ORDER BY id DESC LIMIT 6").fetchall()
+        "SELECT posts.*, (SELECT COUNT(*) FROM post_videos v WHERE v.post_id=posts.id) AS nb_videos FROM posts WHERE published=1 ORDER BY id DESC LIMIT 6").fetchall()
     gallery = get_db().execute("SELECT * FROM gallery ORDER BY id DESC").fetchall()
     return render_template("index.html", posts=posts, gallery=gallery)
 
@@ -267,7 +273,7 @@ def index():
 @app.route("/publications")
 def publications():
     posts = get_db().execute(
-        "SELECT * FROM posts WHERE published=1 ORDER BY id DESC").fetchall()
+        "SELECT posts.*, (SELECT COUNT(*) FROM post_videos v WHERE v.post_id=posts.id) AS nb_videos FROM posts WHERE published=1 ORDER BY id DESC").fetchall()
     return render_template("publications.html", posts=posts)
 
 
@@ -277,7 +283,8 @@ def publication(pid):
     if not p:
         abort(404)
     extras = get_db().execute("SELECT * FROM post_images WHERE post_id=? ORDER BY position, id", (pid,)).fetchall()
-    return render_template("publication.html", p=p, extras=extras)
+    videos = get_db().execute("SELECT * FROM post_videos WHERE post_id=? ORDER BY position, id", (pid,)).fetchall()
+    return render_template("publication.html", p=p, extras=extras, videos=videos)
 
 
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
@@ -424,10 +431,20 @@ def export_csv():
 
 
 # ---------------------------------------------------------------- admin : publications
+def file_size(file):
+    pos = file.stream.tell()
+    file.stream.seek(0, os.SEEK_END)
+    n = file.stream.tell()
+    file.stream.seek(pos)
+    return n
+
+
 def save_image(file):
     """Enregistre l'image si elle est valide. Retourne le nom du fichier ou None."""
     if not file or not file.filename:
         return None
+    if file_size(file) > MAX_IMG_BYTES:
+        raise ValueError("Photo trop lourde (6 Mo maximum par photo).")
     ext = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else ""
     if ext not in ALLOWED_IMG:
         raise ValueError("Image refusée : formats autorisés JPG, PNG, WEBP.")
@@ -435,6 +452,25 @@ def save_image(file):
     file.stream.seek(0)
     if not head.startswith(ALLOWED_IMG[ext]) or (ext == "webp" and head[8:12] != b"WEBP"):
         raise ValueError("Le fichier n'est pas une vraie image.")
+    name = f"{secrets.token_hex(8)}.{ext}"
+    file.save(os.path.join(UPLOADS, name))
+    return name
+
+
+def save_video(file):
+    """Enregistre la vidéo (mp4, mov, webm) si elle est valide. Retourne le nom ou None."""
+    if not file or not file.filename:
+        return None
+    ext = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else ""
+    if ext not in ALLOWED_VIDEO:
+        raise ValueError("Vidéo refusée : formats autorisés MP4, MOV, WEBM.")
+    if file_size(file) > MAX_VIDEO_BYTES:
+        raise ValueError("Vidéo trop lourde (100 Mo maximum par vidéo).")
+    head = file.stream.read(12)
+    file.stream.seek(0)
+    ok = head[4:8] == b"ftyp" if ext in ("mp4", "m4v", "mov") else head[:4] == b"\x1a\x45\xdf\xa3"
+    if not ok:
+        raise ValueError("Le fichier n'est pas une vraie vidéo.")
     name = f"{secrets.token_hex(8)}.{ext}"
     file.save(os.path.join(UPLOADS, name))
     return name
@@ -459,17 +495,18 @@ def admin_posts():
 @login_required
 def admin_post_form(pid=None):
     db = get_db()
-    post, extras = None, []
+    post, extras, videos = None, [], []
     if pid:
         post = db.execute("SELECT * FROM posts WHERE id=?", (pid,)).fetchone()
         if not post:
             abort(404)
         extras = db.execute("SELECT * FROM post_images WHERE post_id=? ORDER BY position, id", (pid,)).fetchall()
+        videos = db.execute("SELECT * FROM post_videos WHERE post_id=? ORDER BY position, id", (pid,)).fetchall()
 
     def render_err(msg):
         flash(msg, "err")
         return render_template("admin/post_form.html", post=request.form, pid=pid,
-                               old_image=post["image"] if post else None, extras=extras), 400
+                               old_image=post["image"] if post else None, extras=extras, videos=videos), 400
 
     if request.method == "POST":
         title = request.form.get("title", "").strip()
@@ -488,6 +525,12 @@ def admin_post_form(pid=None):
                 if n:
                     more.append(n)
                     saved.append(n)
+            new_videos = []
+            for f in request.files.getlist("videos"):
+                n = save_video(f)
+                if n:
+                    new_videos.append(n)
+                    saved.append(n)
         except ValueError as e:
             for n in saved:
                 remove_image(n)
@@ -505,6 +548,12 @@ def admin_post_form(pid=None):
                 if row:
                     remove_image(row["image"])
                     db.execute("DELETE FROM post_images WHERE id=?", (row["id"],))
+            for rid in request.form.getlist("remove_video"):
+                row = db.execute("SELECT * FROM post_videos WHERE id=? AND post_id=?",
+                                 (rid, pid)).fetchone()
+                if row:
+                    remove_image(row["video"])
+                    db.execute("DELETE FROM post_videos WHERE id=?", (row["id"],))
             post_id = pid
             flash("Publication modifiée.", "ok")
         else:
@@ -516,10 +565,14 @@ def admin_post_form(pid=None):
                            (post_id,)).fetchone()[0]
         for i, n in enumerate(more):
             db.execute("INSERT INTO post_images(post_id,image,position) VALUES(?,?,?)", (post_id, n, start + i))
+        vstart = db.execute("SELECT COALESCE(MAX(position),-1)+1 FROM post_videos WHERE post_id=?",
+                            (post_id,)).fetchone()[0]
+        for i, n in enumerate(new_videos):
+            db.execute("INSERT INTO post_videos(post_id,video,position) VALUES(?,?,?)", (post_id, n, vstart + i))
         db.commit()
         return redirect(url_for("admin_posts"))
     return render_template("admin/post_form.html", post=post, pid=pid,
-                           old_image=post["image"] if post else None, extras=extras)
+                           old_image=post["image"] if post else None, extras=extras, videos=videos)
 
 
 @app.route("/admin/publications/<int:pid>/supprimer", methods=["POST"])
@@ -532,6 +585,9 @@ def delete_post(pid):
         for r in db.execute("SELECT image FROM post_images WHERE post_id=?", (pid,)).fetchall():
             remove_image(r["image"])
         db.execute("DELETE FROM post_images WHERE post_id=?", (pid,))
+        for r in db.execute("SELECT video FROM post_videos WHERE post_id=?", (pid,)).fetchall():
+            remove_image(r["video"])
+        db.execute("DELETE FROM post_videos WHERE post_id=?", (pid,))
         db.execute("DELETE FROM posts WHERE id=?", (pid,))
         db.commit()
         flash("Publication supprimée.", "ok")
@@ -623,7 +679,7 @@ def not_found(_):
 
 @app.errorhandler(413)
 def too_big(_):
-    flash("Fichier trop gros (6 Mo maximum).", "err")
+    flash("Envoi trop gros (120 Mo maximum au total).", "err")
     return redirect(request.referrer or url_for("admin_posts"))
 
 
@@ -633,6 +689,15 @@ def linkify(text):
     safe = str(escape(text or ""))
     safe = re.sub(r'(https?://[^\s<]+)', r'<a href="\1" target="_blank" rel="noopener noreferrer">\1</a>', safe)
     return Markup(safe)
+
+
+@app.template_filter("excerpt")
+def excerpt(text, n=160):
+    """Début du texte (sans retours à la ligne), coupé proprement avec « … » si c'est long."""
+    t = " ".join((text or "").split())
+    if len(t) <= n:
+        return t
+    return t[:n].rsplit(" ", 1)[0].rstrip(" ,;:.!?-") + "…"
 
 
 @app.template_filter("dt")
